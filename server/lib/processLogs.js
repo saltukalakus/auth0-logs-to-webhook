@@ -1,4 +1,5 @@
 const async = require('async');
+const request = require('request');
 const moment = require('moment');
 const loggingTools = require('auth0-log-extension-tools');
 const config = require('../lib/config');
@@ -20,21 +21,38 @@ module.exports = (storage) =>
       }
 
       logger.info(`Sending ${logs.length} logs to webhook.`);
+      
+      let url = config('WEBHOOK_URL');
+      let concurentCalls = config('WEBHOOK_CONCURRENT_CALLS')
 
-      /*
-      loggly.log(logs, (err) => {
+      async.eachLimit(logs, concurentCalls, (log, cb) => {
+        Request({
+          method: 'POST',
+          url: url,
+          json: true,
+          headers: { 'cache-control': 'no-cache', 'content-type': 'application/json' },
+          body: logs
+        }, (err, res, body) => {
+          if (err) {
+            logger.info('Error sending request:', err);
+            return cb(new Error('Error sending request to webhook.',err));
+          }
+
+          if (res.statusCode.toString().indexOf('2') !== 0) {
+            logger.info('Unexpected response while sending request:', JSON.stringify(res.body));
+            return cb(new Error('Unexpected response from webhook: ' + res.statusCode + " - " + JSON.stringify(res.body)));
+          }
+
+          cb();
+        });
+      }, (err) => {
         if (err) {
-          logger.info('Error sending logs to webhook', err);
           return callback(err);
         }
 
         logger.info('Upload complete.');
-
         return callback();
       });
-      */
-      // temporary
-      return callback();
     };
 
     const slack = new loggingTools.reporters.SlackReporter({
