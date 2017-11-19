@@ -26,9 +26,10 @@ module.exports = (storage) =>
       let concurentCalls = config('WEBHOOK_CONCURRENT_CALLS')
 
       async.eachLimit(logs, concurentCalls, (log, cb) => {
-        Request({
+        request({
           method: 'POST',
           url: url,
+          timeout: 2000,
           json: true,
           headers: { 'cache-control': 'no-cache', 'content-type': 'application/json' },
           body: log
