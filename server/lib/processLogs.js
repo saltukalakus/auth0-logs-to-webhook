@@ -31,7 +31,7 @@ module.exports = (storage) =>
           url: url,
           json: true,
           headers: { 'cache-control': 'no-cache', 'content-type': 'application/json' },
-          body: logs
+          body: log
         }, (err, res, body) => {
           if (err) {
             logger.info('Error sending request:', err);
